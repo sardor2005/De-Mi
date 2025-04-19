@@ -5,10 +5,8 @@ from collections import OrderedDict
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# Хранилище данных
 users = OrderedDict()
 blockchain = []
-pending_transactions = []
 
 class Block:
     def __init__(self, index, previous_hash, timestamp, data, hash):
@@ -18,7 +16,6 @@ class Block:
         self.data = data
         self.hash = hash
 
-# Создаем генезис-блок
 def create_genesis_block():
     return Block(
         index=0,
@@ -26,9 +23,9 @@ def create_genesis_block():
         timestamp=time.time(),
         data="Genesis Block",
         hash=hashlib.sha256("0".encode()).hexdigest()
-    )
+    ).__dict__
 
-blockchain.append(create_genesis_block().__dict__)
+blockchain.append(create_genesis_block())
 
 @app.route('/')
 def index():
@@ -48,7 +45,7 @@ def register():
 
     users[username] = {
         'password': hashlib.sha256(password.encode()).hexdigest(),
-        'balance': 10  # Начальный баланс
+        'balance': 10
     }
 
     return jsonify({"message": "User registered successfully"}), 201
@@ -89,14 +86,14 @@ def mine():
         timestamp=time.time(),
         data=f"Block mined by {username}",
         hash=hashlib.sha256(f"{len(blockchain)}{last_block['hash']}{time.time()}".encode()).hexdigest()
-    )
+    ).__dict__
 
-    blockchain.append(new_block.__dict__)
-    users[username]['balance'] += 1  # Награда за майнинг
+    blockchain.append(new_block)
+    users[username]['balance'] += 1
 
     return jsonify({
         "message": "New block mined",
-        "block": new_block.__dict__,
+        "block": new_block,
         "balance": users[username]['balance']
     }), 200
 
@@ -116,6 +113,3 @@ def get_balance(username):
         "username": username,
         "balance": users[username]['balance']
     }), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
